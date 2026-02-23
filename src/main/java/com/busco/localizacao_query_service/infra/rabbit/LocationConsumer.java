@@ -1,8 +1,10 @@
 package com.busco.localizacao_query_service.infra.rabbit;
 
 import com.busco.localizacao_query_service.app.LocationProjectionService;
+import com.busco.localizacao_query_service.infra.rabbit.event.AlunoPosicaoAtualizadaEvent;
 import com.busco.localizacao_query_service.infra.rabbit.event.ViagemPosicaoAtualizadaEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,7 +19,7 @@ public class LocationConsumer {
     }
 
     @RabbitListener(queues = "location.query.queue")
-    public void consume(ViagemPosicaoAtualizadaEvent event) {
+    public void consume(@Payload ViagemPosicaoAtualizadaEvent event) {
 
         projectionService
                 .atualizarPosicao(
@@ -25,6 +27,19 @@ public class LocationConsumer {
                         event.latitude,
                         event.longitude,
                         event.velocidade,
+                        event.timestamp
+                )
+                .subscribe();
+    }
+
+    @RabbitListener(queues = "location.query.queue")
+    public void consume(@Payload  AlunoPosicaoAtualizadaEvent event) {
+        projectionService
+                .atualizarPosicaoAluno(
+                        event.alunoId,
+                        event.viagemId,
+                        event.latitude,
+                        event.longitude,
                         event.timestamp
                 )
                 .subscribe();

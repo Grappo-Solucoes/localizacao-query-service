@@ -2,6 +2,7 @@ package com.busco.localizacao_query_service.infra.redis;
 
 import com.busco.localizacao_query_service.domain.AlunoTrackingView;
 import com.busco.localizacao_query_service.domain.ViagemTrackingView;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -16,6 +17,7 @@ public class AlunoTrackingRedisRepository {
     private final ReactiveRedisTemplate<String, AlunoTrackingView> redis;
 
     public AlunoTrackingRedisRepository(
+            @Qualifier("alunoTrackingRedisTemplate")
             ReactiveRedisTemplate<String, AlunoTrackingView> redis
     ) {
         this.redis = redis;

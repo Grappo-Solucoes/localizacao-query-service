@@ -1,7 +1,9 @@
 package com.busco.localizacao_query_service.app;
 
 import com.busco.localizacao_query_service.app.geo.GeoHashService;
+import com.busco.localizacao_query_service.domain.AlunoTrackingView;
 import com.busco.localizacao_query_service.domain.ViagemTrackingView;
+import com.busco.localizacao_query_service.infra.redis.AlunoTrackingRedisRepository;
 import com.busco.localizacao_query_service.infra.redis.RedisPubSubPublisher;
 import com.busco.localizacao_query_service.infra.redis.TrackingRedisRepository;
 import com.busco.localizacao_query_service.websocket.RoomPublisher;
@@ -12,18 +14,18 @@ import reactor.core.publisher.Mono;
 public class LocationProjectionService {
 
     private final TrackingRedisRepository repository;
+    private final AlunoTrackingRedisRepository alunoRepository;
     private final GeoHashService geoHashService;
-    private final RoomPublisher roomPublisher;
     private final RedisPubSubPublisher redisPublisher;
 
     public LocationProjectionService(
-            TrackingRedisRepository repository,
+            TrackingRedisRepository repository, AlunoTrackingRedisRepository alunoRepository,
             GeoHashService geoHashService,
-            RoomPublisher roomPublisher, RedisPubSubPublisher redisPublisher
+            RedisPubSubPublisher redisPublisher
     ) {
         this.repository = repository;
+        this.alunoRepository = alunoRepository;
         this.geoHashService = geoHashService;
-        this.roomPublisher = roomPublisher;
         this.redisPublisher = redisPublisher;
     }
 
@@ -50,5 +52,35 @@ public class LocationProjectionService {
         return repository
                 .save(view)
                 .then(redisPublisher.publish(viagemId, view));
+    }
+
+    public Mono<Void> atualizarPosicaoAluno(
+            String alunoId,
+            String viagemId,
+            double lat,
+            double lng,
+            long timestamp
+    ) {
+
+        String geohash = geoHashService.generate(lat, lng);
+
+        AlunoTrackingView view =
+                new AlunoTrackingView(
+                        alunoId,
+                        viagemId,
+                        lat,
+                        lng,
+                        geohash,
+                        timestamp
+                );
+
+        return alunoRepository
+                .save(view)
+                .flatMap(v ->
+                        redisPublisher.publish(
+                                viagemId,
+                                new TrackingEvent("ALUNO_POSICAO", view)
+                        )
+                );
     }
 }

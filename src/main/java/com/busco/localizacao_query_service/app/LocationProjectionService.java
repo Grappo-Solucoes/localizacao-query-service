@@ -51,7 +51,7 @@ public class LocationProjectionService {
 
         return repository
                 .save(view)
-                .then(redisPublisher.publish(viagemId, view));
+                .then(redisPublisher.publish(viagemId, new TrackingEvent("VIAGEM_POSICAO", view)));
     }
 
     public Mono<Void> atualizarPosicaoAluno(

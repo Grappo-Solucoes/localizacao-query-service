@@ -35,6 +35,17 @@ public class RabbitConfig {
                 .with("viagem.posicao");
     }
 
+    @Bean
+    public Binding bindingAluno(
+            Queue queue,
+            TopicExchange exchange
+    ) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("aluno.posicao");
+    }
+
 
     @Bean
     public MessageConverter messageConverter() {

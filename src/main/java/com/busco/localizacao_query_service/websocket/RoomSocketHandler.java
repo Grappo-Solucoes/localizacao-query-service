@@ -54,6 +54,20 @@ public class RoomSocketHandler implements WebSocketHandler {
         return Mono.empty();
     }
 
+    public Mono<Void> broadcast(
+            String viagemId,
+            String json
+    ) {
+
+        Sinks.Many<String> sink = rooms.get(viagemId);
+
+        if (sink != null) {
+            sink.tryEmitNext(json);
+        }
+
+        return Mono.empty();
+    }
+
     public AtomicInteger getConnections() {
         return connections;
     }

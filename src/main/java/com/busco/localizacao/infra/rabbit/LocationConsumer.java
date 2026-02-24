@@ -15,26 +15,18 @@ import org.springframework.stereotype.Component;
 public class LocationConsumer {
 
     private final LocationProjectionService projectionService;
-    private final ObjectMapper mapper;
 
     public LocationConsumer(
-            LocationProjectionService projectionService, ObjectMapper mapper
+            LocationProjectionService projectionService
     ) {
         this.projectionService = projectionService;
-        this.mapper = mapper;
     }
 
     @RabbitHandler
     @ConditionalOnExpression("#{headers['event-type'] == 'ViagemPosicaoAtualizadaEvent'}")
     public void consume(@Payload ViagemPosicaoAtualizadaEvent event) {
         projectionService
-                .atualizarPosicao(
-                        event.viagemId,
-                        event.latitude,
-                        event.longitude,
-                        event.velocidade,
-                        event.timestamp
-                )
+                .atualizarPosicao(event)
                 .subscribe();
     }
 
@@ -42,13 +34,7 @@ public class LocationConsumer {
     @ConditionalOnExpression("#{headers['event-type'] == 'AlunoPosicaoAtualizadaEvent'}")
     public void consume(@Payload AlunoPosicaoAtualizadaEvent event) {
         projectionService
-                .atualizarPosicaoAluno(
-                        event.alunoId,
-                        event.viagemId,
-                        event.latitude,
-                        event.longitude,
-                        event.timestamp
-                )
+                .atualizarPosicao(event)
                 .subscribe();
     }
 }

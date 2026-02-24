@@ -1,5 +1,7 @@
 package com.busco.localizacao.domain;
 
+import com.busco.localizacao.domain.events.AlunoPosicaoAtualizadaEvent;
+
 public class AlunoTrackingView {
 
     private String alunoId;
@@ -23,20 +25,26 @@ public class AlunoTrackingView {
     public Integer passageirosABordo; // número de passageiros (se disponível)
     public Double precisaoGPS; // precisão da localização em metros
 
-    public AlunoTrackingView(
-            String alunoId,
-            String viagemId,
-            double latitude,
-            double longitude,
-            String geohash,
-            long timestamp
-    ) {
+    public AlunoTrackingView(String alunoId, String viagemId, double latitude, double longitude, String geohash, long timestamp, Double distanciaDoOnibus, Long etaParaEmbarque, Boolean aptoParaEmbarque, String pontoEmbarqueId, String pontoEmbarqueNome, String tipoEmbarque, Double distanciaAtePonto, Long horarioPrevisto, Boolean atrasado, String status, Double velocidadeOnibus, Integer passageirosABordo, Double precisaoGPS) {
         this.alunoId = alunoId;
         this.viagemId = viagemId;
         this.latitude = latitude;
         this.longitude = longitude;
         this.geohash = geohash;
         this.timestamp = timestamp;
+        this.distanciaDoOnibus = distanciaDoOnibus;
+        this.etaParaEmbarque = etaParaEmbarque;
+        this.aptoParaEmbarque = aptoParaEmbarque;
+        this.pontoEmbarqueId = pontoEmbarqueId;
+        this.pontoEmbarqueNome = pontoEmbarqueNome;
+        this.tipoEmbarque = tipoEmbarque;
+        this.distanciaAtePonto = distanciaAtePonto;
+        this.horarioPrevisto = horarioPrevisto;
+        this.atrasado = atrasado;
+        this.status = status;
+        this.velocidadeOnibus = velocidadeOnibus;
+        this.passageirosABordo = passageirosABordo;
+        this.precisaoGPS = precisaoGPS;
     }
 
     public String getAlunoId() {
@@ -113,5 +121,10 @@ public class AlunoTrackingView {
 
     public Double getPrecisaoGPS() {
         return precisaoGPS;
+    }
+
+    public static AlunoTrackingView of(AlunoPosicaoAtualizadaEvent event, String geohash) {
+        return new AlunoTrackingView(event.alunoId, event.viagemId, event.latitude, event.longitude, geohash, event.timestamp, event.distanciaDoOnibus, event.etaParaEmbarque,
+                event.aptoParaEmbarque, event.pontoEmbarqueId, event.pontoEmbarqueNome, event.tipoEmbarque, event.distanciaAtePonto, event.horarioPrevisto, event.atrasado, event.status, event.velocidadeOnibus, event.passageirosABordo, event.precisaoGPS);
     }
 }

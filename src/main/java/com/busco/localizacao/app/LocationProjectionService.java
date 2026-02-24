@@ -3,6 +3,8 @@ package com.busco.localizacao.app;
 import com.busco.localizacao.app.geo.GeoHashService;
 import com.busco.localizacao.domain.AlunoTrackingView;
 import com.busco.localizacao.domain.ViagemTrackingView;
+import com.busco.localizacao.domain.events.AlunoPosicaoAtualizadaEvent;
+import com.busco.localizacao.domain.events.ViagemPosicaoAtualizadaEvent;
 import com.busco.localizacao.infra.redis.AlunoTrackingRedisRepository;
 import com.busco.localizacao.infra.redis.RedisPubSubPublisher;
 import com.busco.localizacao.infra.redis.TrackingRedisRepository;
@@ -29,55 +31,36 @@ public class LocationProjectionService {
     }
 
     public Mono<Void> atualizarPosicao(
-            String viagemId,
-            double lat,
-            double lng,
-            double velocidade,
-            long timestamp
+            ViagemPosicaoAtualizadaEvent event
     ) {
 
-        String geohash = geoHashService.generate(lat, lng);
+        String geohash = geoHashService.generate(event.latitude, event.longitude);
 
         ViagemTrackingView view =
-                new ViagemTrackingView(
-                        viagemId,
-                        lat,
-                        lng,
-                        velocidade,
-                        geohash,
-                        timestamp
-                );
+                ViagemTrackingView.of(event, geohash);
 
         return repository
                 .save(view)
-                .then(redisPublisher.publish(viagemId, new TrackingEvent("VIAGEM_POSICAO", view)));
+                .then(redisPublisher.publish(event.viagemId, new TrackingEvent("VIAGEM_POSICAO", view)));
     }
 
-    public Mono<Void> atualizarPosicaoAluno(
-            String alunoId,
-            String viagemId,
-            double lat,
-            double lng,
-            long timestamp
+    public Mono<Void> atualizarPosicao(
+            AlunoPosicaoAtualizadaEvent event
     ) {
 
-        String geohash = geoHashService.generate(lat, lng);
+        String geohash = geoHashService.generate(event.latitude, event.longitude);
 
         AlunoTrackingView view =
-                new AlunoTrackingView(
-                        alunoId,
-                        viagemId,
-                        lat,
-                        lng,
-                        geohash,
-                        timestamp
+                 AlunoTrackingView.of(
+                        event,
+                        geohash
                 );
 
         return alunoRepository
                 .save(view)
                 .flatMap(v ->
                         redisPublisher.publish(
-                                viagemId,
+                                event.viagemId,
                                 new TrackingEvent("ALUNO_POSICAO", view)
                         )
                 );

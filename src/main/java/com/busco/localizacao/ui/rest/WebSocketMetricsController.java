@@ -1,6 +1,6 @@
 package com.busco.localizacao.ui.rest;
 
-import com.busco.localizacao.websocket.RoomSocketHandler;
+import com.busco.localizacao.websocket.SalasDeAcompanhamento;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/metrics")
 public class WebSocketMetricsController {
 
-    private final RoomSocketHandler handler;
+    private final SalasDeAcompanhamento salas;
 
-    public WebSocketMetricsController(RoomSocketHandler handler) {
-        this.handler = handler;
+    public WebSocketMetricsController(SalasDeAcompanhamento salas) {
+        this.salas = salas;
     }
 
     @GetMapping("/connections")
     public String connections() {
         return "busco_websocket_connections " +
-                handler.getConnections();
+                salas.conexoes();
     }
 }

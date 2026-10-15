@@ -14,20 +14,11 @@
 	<artifactId>localizacao-query-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>localizacao-query-service</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Lado query das posicoes de rastreamento: consome o Kafka e serve as consultas</description>
 
 	<properties>
 		<java.version>17</java.version>
-		<spring-cloud.version>2024.0.1</spring-cloud.version>
 	</properties>
-
-	<repositories>
-		<repository>
-			<id>clojars</id>
-			<name>Clojars Repository</name>
-			<url>https://repo.clojars.org/</url>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -35,8 +26,8 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-amqp</artifactId>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -46,20 +37,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-stream</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-stream-binder-rabbit</artifactId>
-		</dependency>
 
-		<!-- factual/geo dependency -->
+		<!-- geohash da posicao projetada: ch.hsr:geohash e o que GeoHashService usa -->
 		<dependency>
-			<groupId>factual</groupId>
-			<artifactId>geo</artifactId>
-			<version>3.0.0-rc-3</version>
+			<groupId>ch.hsr</groupId>
+			<artifactId>geohash</artifactId>
+			<version>1.3.0</version>
 		</dependency>
 
 		<!-- Test dependencies -->
@@ -69,8 +52,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-stream-test-binder</artifactId>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -79,18 +62,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<plugins>

@@ -1,138 +1,87 @@
 package com.busco.localizacao.domain;
 
-import com.busco.localizacao.domain.events.ViagemPosicaoAtualizadaEvent;
+import com.busco.localizacao.domain.events.PosicaoVeiculoRegistrada;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
-import java.util.Map;
+/**
+ * Ultima posicao projetada de uma viagem: apenas o que o contrato do topico {@code
+ * tracking.posicao-veiculo.v1} carrega, mais o geohash (consulta por regiao) e o instante de
+ * expiracao (validade do read model).
+ *
+ * <p>O criador e explicito porque a classe nao tem construtor sem argumentos: o Jackson nao
+ * escolheria um criador implicito sem os nomes dos parametros.</p>
+ */
+public class ViagemTrackingView {
 
-public class ViagemTrackingView implements Serializable {
+    private final String viagemId;
+    private final double latitude;
+    private final double longitude;
+    private final long timestamp;
+    private final String geohash;
+    private final long expiraEm;
+    private final Double bateria;
+    private final Double precisao;
+    private final String provedor;
 
-    private String viagemId;
-    private double latitude;
-    private double longitude;
-    private double velocidade;
-    private String geohash;
-    private long timestamp;
-
-    public String endereco;
-    public Double distanciaParaDestino;
-    public Long etaSegundos;
-    public String status; // "EM_ROTA", "PROXIMO", "CHEGOU", "PARADO"
-    public Map<String, Object> metadata;
-    public Double accuracy;
-    public String provedor;
-    public Object bateria;
-
-    public String proximoPontoId;
-    public String proximoPontoNome;
-    public Double proximoPontoDistancia; // em metros
-    public Long proximoPontoETA; // em segundos
-    public String proximoPontoTipo; // TERMINAL, ESCOLA, PARADA
-
-    public ViagemTrackingView() {}
-
-    public ViagemTrackingView(String viagemId, double latitude, double longitude, double velocidade, String geohash, long timestamp, String endereco, Double distanciaParaDestino, Long etaSegundos, String status, Map<String, Object> metadata, Double accuracy, String provedor, Object bateria, String proximoPontoId, String proximoPontoNome, Double proximoPontoDistancia, Long proximoPontoETA, String proximoPontoTipo) {
+    @JsonCreator
+    public ViagemTrackingView(@JsonProperty("viagemId") String viagemId,
+                              @JsonProperty("latitude") double latitude,
+                              @JsonProperty("longitude") double longitude,
+                              @JsonProperty("timestamp") long timestamp,
+                              @JsonProperty("geohash") String geohash,
+                              @JsonProperty("expiraEm") long expiraEm,
+                              @JsonProperty("bateria") Double bateria,
+                              @JsonProperty("precisao") Double precisao,
+                              @JsonProperty("provedor") String provedor) {
         this.viagemId = viagemId;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.velocidade = velocidade;
-        this.geohash = geohash;
         this.timestamp = timestamp;
-        this.endereco = endereco;
-        this.distanciaParaDestino = distanciaParaDestino;
-        this.etaSegundos = etaSegundos;
-        this.status = status;
-        this.metadata = metadata;
-        this.accuracy = accuracy;
-        this.provedor = provedor;
+        this.geohash = geohash;
+        this.expiraEm = expiraEm;
         this.bateria = bateria;
-        this.proximoPontoId = proximoPontoId;
-        this.proximoPontoNome = proximoPontoNome;
-        this.proximoPontoDistancia = proximoPontoDistancia;
-        this.proximoPontoETA = proximoPontoETA;
-        this.proximoPontoTipo = proximoPontoTipo;
+        this.precisao = precisao;
+        this.provedor = provedor;
+    }
+
+    /**
+     * Posicao do veiculo vinda do topico Kafka: projeta somente o que o contrato v1 carrega.
+     */
+    public static ViagemTrackingView of(PosicaoVeiculoRegistrada event, String geohash, long expiraEm) {
+        return new ViagemTrackingView(
+                event.viagemId(),
+                event.latitude(),
+                event.longitude(),
+                event.timestamp(),
+                geohash,
+                expiraEm,
+                event.bateria(),
+                event.precisao(),
+                event.provedor()
+        );
+    }
+
+    /** A posicao vale enquanto o instante informado for anterior a expiracao. */
+    public boolean validaEm(long instante) {
+        return instante < expiraEm;
     }
 
     public String getViagemId() { return viagemId; }
+
     public double getLatitude() { return latitude; }
+
     public double getLongitude() { return longitude; }
-    public double getVelocidade() { return velocidade; }
-    public String getGeohash() { return geohash; }
+
     public long getTimestamp() { return timestamp; }
 
-    public String getEndereco() {
-        return endereco;
-    }
+    public String getGeohash() { return geohash; }
 
-    public Double getDistanciaParaDestino() {
-        return distanciaParaDestino;
-    }
+    public long getExpiraEm() { return expiraEm; }
 
-    public Long getEtaSegundos() {
-        return etaSegundos;
-    }
+    public Double getBateria() { return bateria; }
 
-    public String getStatus() {
-        return status;
-    }
+    public Double getPrecisao() { return precisao; }
 
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public Double getAccuracy() {
-        return accuracy;
-    }
-
-    public String getProvedor() {
-        return provedor;
-    }
-
-    public Object getBateria() {
-        return bateria;
-    }
-
-    public String getProximoPontoId() {
-        return proximoPontoId;
-    }
-
-    public String getProximoPontoNome() {
-        return proximoPontoNome;
-    }
-
-    public Double getProximoPontoDistancia() {
-        return proximoPontoDistancia;
-    }
-
-    public Long getProximoPontoETA() {
-        return proximoPontoETA;
-    }
-
-    public String getProximoPontoTipo() {
-        return proximoPontoTipo;
-    }
-
-    public static ViagemTrackingView of(ViagemPosicaoAtualizadaEvent event, String geohash) {
-        return new ViagemTrackingView(
-                event.viagemId,
-                event.latitude,
-                event.longitude,
-                event.velocidade,
-                geohash,
-                event.timestamp,
-                event.endereco,
-                event.distanciaParaDestino,
-                event.etaSegundos,
-                event.status,
-                event.metadata,
-                event.accuracy,
-                event.provedor,
-                event.bateria,
-                event.proximoPontoId,
-                event.proximoPontoNome,
-                event.proximoPontoDistancia,
-                event.proximoPontoETA,
-                event.proximoPontoTipo
-        );
-    }
+    public String getProvedor() { return provedor; }
 }

@@ -1,74 +1,33 @@
 package com.busco.localizacao.websocket;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.*;
-import reactor.core.publisher.*;
+import org.springframework.web.reactive.socket.CloseStatus;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ * Acompanhamento de uma viagem por WebSocket: o caminho {@code /ws/viagem/{viagemId}} define a sala.
+ *
+ * <p>Handshake fora do padrao e recusado. As conexoes recebem o payload publicado na viagem
+ * enquanto a sessao estiver aberta.</p>
+ */
 @Component
 public class RoomSocketHandler implements WebSocketHandler {
 
-    private final Map<String, Sinks.Many<String>> rooms =
-            new ConcurrentHashMap<>();
+    private final SalasDeAcompanhamento salas;
 
-    private final AtomicInteger connections = new AtomicInteger();
-
+    public RoomSocketHandler(SalasDeAcompanhamento salas) {
+        this.salas = salas;
+    }
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        connections.incrementAndGet();
-
-        String path = session.getHandshakeInfo()
-                .getUri()
-                .getPath();
-
-        String viagemId = path.split("/")[3];
-
-        Sinks.Many<String> sink =
-                rooms.computeIfAbsent(
-                        viagemId,
-                        k -> Sinks.many().multicast().onBackpressureBuffer()
-                );
-
-        Flux<WebSocketMessage> output =
-                sink.asFlux()
-                        .map(session::textMessage);
-
-        return session.send(output);
-    }
-
-    public Mono<Void> publish(
-            String viagemId,
-            String json
-    ) {
-
-        Sinks.Many<String> sink = rooms.get(viagemId);
-
-        if (sink != null) {
-            sink.tryEmitNext(json);
+        String viagemId = CaminhosDaViagem.viagemId(session.getHandshakeInfo().getUri().getPath());
+        if (viagemId == null) {
+            return session.close(CloseStatus.BAD_DATA.withReason("caminho esperado: /ws/viagem/{viagemId}"));
         }
 
-        return Mono.empty();
-    }
-
-    public Mono<Void> broadcast(
-            String viagemId,
-            String json
-    ) {
-
-        Sinks.Many<String> sink = rooms.get(viagemId);
-
-        if (sink != null) {
-            sink.tryEmitNext(json);
-        }
-
-        return Mono.empty();
-    }
-
-    public AtomicInteger getConnections() {
-        return connections;
+        return session.send(salas.entrar(viagemId).map(session::textMessage));
     }
 }

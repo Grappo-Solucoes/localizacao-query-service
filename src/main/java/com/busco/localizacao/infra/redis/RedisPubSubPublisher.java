@@ -1,12 +1,13 @@
 package com.busco.localizacao.infra.redis;
 
+import com.busco.localizacao.app.PosicaoPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
-public class RedisPubSubPublisher {
+public class RedisPubSubPublisher implements PosicaoPublisher {
 
     private final ReactiveRedisTemplate<String, String> redis;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -28,7 +29,7 @@ public class RedisPubSubPublisher {
 
             return redis
                     .convertAndSend(
-                            "tracking.viagem." + viagemId,
+                            CanalDeViagem.nome(viagemId),
                             json
                     )
                     .then();
